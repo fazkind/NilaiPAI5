@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengumuman Nilai Mata Pelajaran</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Warna latar belakang abu-abu muda */
+            color: #374151; /* Warna teks gelap */
+        }
+        /* Custom scrollbar for table on smaller screens */
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-blue-700 mb-6">Pengumuman Nilai Mata Pelajaran: Pemrograman Web</h1>
+
+        <div class="mb-6 flex flex-col sm:flex-row gap-4">
+            <input type="text" id="searchInput" placeholder="Cari berdasarkan NIM atau Nama Siswa..."
+                   class="w-full sm:w-2/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+            <label for="fileInput" class="w-full sm:w-1/3 flex items-center justify-center bg-blue-500 text-white p-3 rounded-lg cursor-pointer hover:bg-blue-600 transition duration-200 ease-in-out text-center">
+                Pilih File CSV Nilai
+                <input type="file" id="fileInput" accept=".csv" class="hidden">
+            </label>
+        </div>
+        <div id="messageBox" class="hidden bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Perhatian!</strong>
+            <span class="block sm:inline" id="messageText"></span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="document.getElementById('messageBox').classList.add('hidden');">
+                <svg class="fill-current h-6 w-6 text-yellow-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+            </span>
+        </div>
+
+        <div id="noResultsMessage" class="hidden text-center text-gray-600 text-lg my-4">
+            Tidak ada nilai yang cocok dengan pencarian Anda.
+        </div>
+
+        <div class="overflow-x-auto rounded-lg shadow-md">
+            <table class="min-w-full bg-white border-collapse">
+                <thead>
+                    <tr class="bg-blue-600 text-white text-left text-sm md:text-base">
+                        <th class="py-3 px-4 uppercase font-semibold text-xs rounded-tl-lg">NIM</th>
+                        <th class="py-3 px-4 uppercase font-semibold text-xs">Nama Siswa</th>
+                        <th class="py-3 px-4 uppercase font-semibold text-xs text-center">Nilai</th>
+                        <th class="py-3 px-4 uppercase font-semibold text-xs rounded-tr-lg">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody id="gradeTableBody" class="text-gray-700 text-sm md:text-base">
+                    <!-- Data pengumuman nilai akan dimasukkan di sini oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8 text-center text-gray-500 text-sm">
+            <p>Untuk informasi lebih lanjut mengenai nilai, silakan hubungi dosen/guru mata pelajaran.</p>
+            <p class="mt-2">Hak Cipta &copy; 2025. Semua Hak Dilindungi.</p>
+        </div>
+    </div>
+
+    <script>
+        // Data contoh pengumuman nilai untuk mata pelajaran "Pemrograman Web"
+        // Data ini akan diganti jika file CSV diimport
+        let gradeAnnouncements = [
+            {
+                nim: "2023001",
+                studentName: "Budi Santoso",
+                grade: "A",
+                notes: "Sangat baik, pertahankan!"
+            },
+            {
+                nim: "2023002",
+                studentName: "Siti Aminah",
+                grade: "B+",
+                notes: "Cukup baik, tingkatkan lagi."
+            },
+            {
+                nim: "2023003",
+                studentName: "Joko Susilo",
+                grade: "C",
+                notes: "Perlu perbaikan di bagian dasar."
+            },
+            {
+                nim: "2023004",
+                studentName: "Dewi Lestari",
+                grade: "A-",
+                notes: "Baik sekali!"
+            },
+            {
+                nim: "2023005",
+                studentName: "Andi Wijaya",
+                grade: "B",
+                notes: "Kerja keras membuahkan hasil."
+            },
+            {
+                nim: "2023006",
+                studentName: "Kartika Sari",
+                grade: "D",
+                notes: "Disarankan mengulang."
+            }
+        ];
+
+        const searchInput = document.getElementById('searchInput');
+        const gradeTableBody = document.getElementById('gradeTableBody');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const fileInput = document.getElementById('fileInput');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        // Fungsi untuk menampilkan pesan ke user (pengganti alert)
+        function showMessage(message, type = 'info') {
+            messageText.textContent = message;
+            messageBox.className = `bg-${type}-100 border border-${type}-400 text-${type}-700 px-4 py-3 rounded relative mb-4`;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Fungsi untuk menampilkan pengumuman nilai ke dalam tabel
+        function renderAnnouncements(announcementsToShow) {
+            gradeTableBody.innerHTML = ''; // Kosongkan tabel terlebih dahulu
+            if (announcementsToShow.length === 0) {
+                noResultsMessage.classList.remove('hidden'); // Tampilkan pesan jika tidak ada hasil
+            } else {
+                noResultsMessage.classList.add('hidden'); // Sembunyikan pesan jika ada hasil
+                announcementsToShow.forEach((grade, index) => {
+                    const row = document.createElement('tr');
+                    // Tambahkan kelas untuk zebra striping (warna selang-seling)
+                    row.classList.add(index % 2 === 0 ? 'bg-gray-50' : 'bg-white');
+                    // Tambahkan border bawah untuk setiap baris
+                    row.classList.add('border-b', 'border-gray-200');
+                    // Tambahkan efek hover
+                    row.classList.add('hover:bg-gray-100');
+
+                    row.innerHTML = `
+                        <td class="py-3 px-4 whitespace-nowrap">${grade.nim || ''}</td>
+                        <td class="py-3 px-4 whitespace-nowrap">${grade.studentName || ''}</td>
+                        <td class="py-3 px-4 whitespace-nowrap text-center font-bold">${grade.grade || ''}</td>
+                        <td class="py-3 px-4">${grade.notes || ''}</td>
+                    `;
+                    gradeTableBody.appendChild(row);
+                });
+            }
+        }
+
+        // Fungsi untuk menangani pencarian
+        searchInput.addEventListener('keyup', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const filteredAnnouncements = gradeAnnouncements.filter(grade =>
+                (grade.nim && grade.nim.toLowerCase().includes(searchTerm)) ||
+                (grade.studentName && grade.studentName.toLowerCase().includes(searchTerm))
+            );
+            renderAnnouncements(filteredAnnouncements);
+        });
+
+        // Event listener untuk input file
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // Pastikan file yang diunggah adalah CSV
+                if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                    showMessage('Mohon unggah file dengan format CSV (.csv).', 'red');
+                    fileInput.value = ''; // Reset input file
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n').filter(line => line.trim() !== ''); // Filter baris kosong
+                        const newGradeData = [];
+
+                        // Asumsi baris pertama adalah header, kita bisa skip atau gunakan untuk validasi
+                        // Untuk contoh ini, kita asumsikan urutan kolom adalah NIM, Nama Siswa, Nilai, Keterangan
+                        if (lines.length > 1) { // Pastikan ada data selain header
+                            for (let i = 1; i < lines.length; i++) {
+                                const parts = lines[i].split(',');
+                                if (parts.length >= 4) { // Pastikan ada setidaknya 4 kolom
+                                    newGradeData.push({
+                                        nim: parts[0].trim(),
+                                        studentName: parts[1].trim(),
+                                        grade: parts[2].trim(),
+                                        notes: parts[3].trim()
+                                    });
+                                }
+                            }
+                        }
+
+                        if (newGradeData.length > 0) {
+                            gradeAnnouncements = newGradeData; // Ganti data lama dengan data baru
+                            renderAnnouncements(gradeAnnouncements);
+                            showMessage('Data nilai berhasil diimport dari file CSV!', 'green');
+                        } else {
+                            showMessage('File CSV kosong atau format tidak sesuai. Pastikan ada data dan kolom yang benar (NIM, Nama Siswa, Nilai, Keterangan).', 'yellow');
+                        }
+                    } catch (error) {
+                        console.error("Error reading or parsing CSV:", error);
+                        showMessage('Terjadi kesalahan saat memproses file CSV.', 'red');
+                    }
+                };
+
+                reader.onerror = () => {
+                    showMessage('Tidak dapat membaca file.', 'red');
+                };
+
+                reader.readAsText(file); // Baca file sebagai teks
+            }
+        });
+
+        // Tampilkan semua pengumuman saat halaman pertama kali dimuat
+        renderAnnouncements(gradeAnnouncements);
+    </script>
+
+</body>
+</html>
